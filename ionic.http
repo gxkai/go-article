@@ -1,0 +1,35 @@
+###
+POST http://localhost:10000/login
+Content-Type: application/json
+
+{
+  "Username": "gxkai",
+  "Password": "666"
+}
+
+> {% client.global.set("auth_token", response.body); %}
+###
+POST http://localhost:10000/article
+Content-Type: application/json
+Authorization: {{auth_token}}
+
+{
+  "Owner": "gxkai",
+  "Title": "Title",
+  "Description": "Description",
+  "Content": "Content"
+}
+
+###
+GET http://localhost:10000/articles
+Authorization: {{auth_token}}
+
+###
+GET http://localhost:10000/articles?Owner=gxkai
+Authorization: {{auth_token}}
+
+###
+GET http://localhost:10000/article/1
+Authorization: {{auth_token}}
+
+
