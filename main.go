@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -223,7 +224,8 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 }
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.RequestURI == "/login" {
+		reg, _ := regexp.Compile("^/static")
+		if r.RequestURI == "/login" || reg.MatchString(r.RequestURI) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -273,6 +275,8 @@ func handleRequests() {
 	myRouter.HandleFunc("/article/{id}", deleteArticle).Methods(http.MethodDelete)
 	myRouter.HandleFunc("/article/{id}", returnSingleArticle).Methods(http.MethodGet)
 	myRouter.HandleFunc("/upload", uploadFile).Methods(http.MethodPost)
+	s := http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))
+	myRouter.PathPrefix("/static/").Handler(s)
 	log.Fatal(http.ListenAndServe(":10000", myRouter))
 }
 
