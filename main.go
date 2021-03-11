@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/wuwenbao/gcors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -277,7 +278,13 @@ func handleRequests() {
 	myRouter.HandleFunc("/upload", uploadFile).Methods(http.MethodPost)
 	s := http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))
 	myRouter.PathPrefix("/static/").Handler(s)
-	log.Fatal(http.ListenAndServe(":10000", myRouter))
+	cors := gcors.New(
+		myRouter,
+		gcors.WithOrigin("*"),
+		gcors.WithMethods("*"),
+		gcors.WithHeaders("*"),
+	)
+	log.Fatal(http.ListenAndServe(":10000", cors))
 }
 
 func returnJwt(w http.ResponseWriter, r *http.Request) {
@@ -321,7 +328,7 @@ func main() {
 		return
 	}
 	Statement, err :=
-		database.Prepare("CREATE TABLE IF NOT EXISTS Article (Id INTEGER PRIMARY KEY, Owner TEXT, Title TEXT, Description TEXT, Content Text, Image, Text)")
+		database.Prepare("CREATE TABLE IF NOT EXISTS Article (Id INTEGER PRIMARY KEY, Owner TEXT, Title TEXT, Description TEXT, Content Text, Image Text,CreatedTime Text,UpdatedTime Text)")
 	if err != nil {
 		log.Fatal(err)
 		return
