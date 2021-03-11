@@ -15,6 +15,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -26,6 +27,8 @@ type Article struct {
 	Description string
 	Content     string
 	Image       string
+	CreatedTime string
+	UpdatedTime string
 }
 type User struct {
 	Username string
@@ -39,12 +42,12 @@ type Claims struct {
 var database *sql.DB
 var users = [...]User{
 	{
-		Username: "gxkai",
-		Password: "666",
+		Username: "gxk",
+		Password: "1024",
 	},
 	{
 		Username: "lqy",
-		Password: "666",
+		Password: "1207",
 	},
 }
 var jwtKey = []byte("666")
@@ -63,9 +66,12 @@ func return401(w http.ResponseWriter, err error) {
 func returnAllArticles(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: returnAllArticles")
 	Owner := r.FormValue("Owner")
-	sqlStr := "SELECT Id, Owner, Title, Description, Content FROM Article WHERE 1=1"
-	if Owner != "" {
-		sqlStr = sqlStr + " and Owner='" + Owner + "'"
+	sqlStr := "SELECT Id, Owner, Title, Description, Content, UpdatedTime FROM Article WHERE 1=1"
+	if strings.Compare(Owner, "Mine") == 0 {
+		sqlStr = sqlStr + " and Owner='" + username + "'"
+	}
+	if strings.Compare(Owner, "External") == 0 {
+		sqlStr = sqlStr + " and Owner not in ('" + username + "')"
 	}
 	rows, err :=
 		database.Query(sqlStr)
@@ -76,7 +82,7 @@ func returnAllArticles(w http.ResponseWriter, r *http.Request) {
 	article := Article{}
 	articles := []Article{}
 	for rows.Next() {
-		err := rows.Scan(&article.Id, &article.Owner, &article.Title, &article.Description, &article.Content)
+		err := rows.Scan(&article.Id, &article.Owner, &article.Title, &article.Description, &article.Content, &article.UpdatedTime)
 		if err != nil {
 			return500(w, err)
 			return
@@ -114,13 +120,17 @@ func createNewArticle(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	var article Article
 	json.Unmarshal(reqBody, &article)
+	article.Owner = username
+	tm := time.Unix(time.Now().Unix(), 0).Format("2006-01-02 03:04:05")
+	article.CreatedTime = tm
+	article.UpdatedTime = tm
 	Statement, err :=
-		database.Prepare("INSERT INTO Article (Owner, Title, Description, Content) VALUES (?, ?, ? ,?)")
+		database.Prepare("INSERT INTO Article (Owner, Title, Description, Content,CreatedTime ,UpdatedTime) VALUES (?, ?, ? ,?, ? , ?)")
 	if err != nil {
 		return500(w, err)
 		return
 	}
-	result, err := Statement.Exec(article.Owner, article.Title, article.Description, article.Content)
+	result, err := Statement.Exec(article.Owner, article.Title, article.Description, article.Content, article.CreatedTime, article.UpdatedTime)
 	if err != nil {
 		return500(w, err)
 		return
@@ -295,7 +305,7 @@ func returnJwt(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(tokenString)
 		return
 	}
-	panic(false)
+	return401(w, errors.New("The user does not exist"))
 }
 
 func main() {
