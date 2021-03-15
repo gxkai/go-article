@@ -75,6 +75,7 @@ func returnAllArticles(w http.ResponseWriter, r *http.Request) {
 	if strings.Compare(Owner, "External") == 0 {
 		sqlStr = sqlStr + " and Owner not in ('" + username + "')"
 	}
+	sqlStr += " ORDER BY UpdatedTime DESC "
 	rows, err :=
 		database.Query(sqlStr)
 	if err != nil {
@@ -143,6 +144,27 @@ func createNewArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	article.Id = strconv.FormatInt(newId, 10)
+	fmt.Println(article)
+	json.NewEncoder(w).Encode(article)
+}
+
+func updateArticle(w http.ResponseWriter, r *http.Request) {
+	reqBody, _ := ioutil.ReadAll(r.Body)
+	var article Article
+	json.Unmarshal(reqBody, &article)
+	tm := time.Unix(time.Now().Unix(), 0).Format("2006-01-02 03:04:05")
+	article.UpdatedTime = tm
+	Statement, err :=
+		database.Prepare("UPDATE Article SET Content = ? , UpdatedTime = ? WHERE Id = ?")
+	if err != nil {
+		return500(w, err)
+		return
+	}
+	_, err = Statement.Exec(article.Content, article.UpdatedTime, article.Id)
+	if err != nil {
+		return500(w, err)
+		return
+	}
 	fmt.Println(article)
 	json.NewEncoder(w).Encode(article)
 }
@@ -273,6 +295,7 @@ func handleRequests() {
 	myRouter.HandleFunc("/login", returnJwt).Methods(http.MethodPost)
 	myRouter.HandleFunc("/articles", returnAllArticles).Methods(http.MethodGet)
 	myRouter.HandleFunc("/article", createNewArticle).Methods(http.MethodPost)
+	myRouter.HandleFunc("/article", updateArticle).Methods(http.MethodPut)
 	myRouter.HandleFunc("/article/{id}", deleteArticle).Methods(http.MethodDelete)
 	myRouter.HandleFunc("/article/{id}", returnSingleArticle).Methods(http.MethodGet)
 	myRouter.HandleFunc("/upload", uploadFile).Methods(http.MethodPost)
