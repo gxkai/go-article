@@ -68,7 +68,7 @@ func return401(w http.ResponseWriter, err error) {
 func returnAllArticles(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: returnAllArticles")
 	Owner := r.FormValue("Owner")
-	sqlStr := "SELECT Id, Owner, Title, Description, Content, UpdatedTime FROM Article WHERE 1=1"
+	sqlStr := "SELECT Id, Owner, Title, Description, Content, Image, UpdatedTime FROM Article WHERE 1=1"
 	if strings.Compare(Owner, "Mine") == 0 {
 		sqlStr = sqlStr + " and Owner='" + username + "'"
 	}
@@ -85,7 +85,7 @@ func returnAllArticles(w http.ResponseWriter, r *http.Request) {
 	article := Article{}
 	articles := []Article{}
 	for rows.Next() {
-		err := rows.Scan(&article.Id, &article.Owner, &article.Title, &article.Description, &article.Content, &article.UpdatedTime)
+		err := rows.Scan(&article.Id, &article.Owner, &article.Title, &article.Description, &article.Content, &article.Image, &article.UpdatedTime)
 		if err != nil {
 			return500(w, err)
 			return
@@ -101,14 +101,14 @@ func returnSingleArticle(w http.ResponseWriter, r *http.Request) {
 	id := vars["id"]
 
 	rows, err :=
-		database.Query("SELECT Id, Owner, Title, Description, Content FROM Article WHERE  Id = $1", id)
+		database.Query("SELECT Id, Owner, Title, Description, Content, Image FROM Article WHERE  Id = $1", id)
 	if err != nil {
 		return500(w, err)
 		return
 	}
 	article := Article{}
 	for rows.Next() {
-		err := rows.Scan(&article.Id, &article.Owner, &article.Title, &article.Description, &article.Content)
+		err := rows.Scan(&article.Id, &article.Owner, &article.Title, &article.Description, &article.Content, &article.Image)
 		if err != nil {
 			return500(w, err)
 			return
@@ -128,12 +128,12 @@ func createNewArticle(w http.ResponseWriter, r *http.Request) {
 	article.CreatedTime = tm
 	article.UpdatedTime = tm
 	Statement, err :=
-		database.Prepare("INSERT INTO Article (Owner, Title, Description, Content,CreatedTime ,UpdatedTime) VALUES (?, ?, ? ,?, ? , ?)")
+		database.Prepare("INSERT INTO Article (Owner, Title, Description, Content, Image ,CreatedTime ,UpdatedTime) VALUES (?, ?, ? , ?,?, ? , ?)")
 	if err != nil {
 		return500(w, err)
 		return
 	}
-	result, err := Statement.Exec(article.Owner, article.Title, article.Description, article.Content, article.CreatedTime, article.UpdatedTime)
+	result, err := Statement.Exec(article.Owner, article.Title, article.Description, article.Content, article.Image, article.CreatedTime, article.UpdatedTime)
 	if err != nil {
 		return500(w, err)
 		return
@@ -155,12 +155,12 @@ func updateArticle(w http.ResponseWriter, r *http.Request) {
 	tm := time.Unix(time.Now().Unix(), 0).Format("2006-01-02 03:04:05")
 	article.UpdatedTime = tm
 	Statement, err :=
-		database.Prepare("UPDATE Article SET Content = ? , UpdatedTime = ? WHERE Id = ?")
+		database.Prepare("UPDATE Article SET Content = ? , UpdatedTime = ?, Image = ? WHERE Id = ?")
 	if err != nil {
 		return500(w, err)
 		return
 	}
-	_, err = Statement.Exec(article.Content, article.UpdatedTime, article.Id)
+	_, err = Statement.Exec(article.Content, article.UpdatedTime, article.Image, article.Id)
 	if err != nil {
 		return500(w, err)
 		return
