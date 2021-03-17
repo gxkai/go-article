@@ -31,6 +31,7 @@ type Article struct {
 	Image       string
 	CreatedTime string
 	UpdatedTime string
+	LikeNum     int
 }
 type User struct {
 	Username string
@@ -68,7 +69,7 @@ func return401(w http.ResponseWriter, err error) {
 func returnAllArticles(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: returnAllArticles")
 	Owner := r.FormValue("Owner")
-	sqlStr := "SELECT Id, Owner, Title, Description, Content, Image, UpdatedTime FROM Article WHERE 1=1"
+	sqlStr := "SELECT Id, Owner, Title, Description, Content, Image, UpdatedTime, LikeNum FROM Article WHERE 1=1"
 	if strings.Compare(Owner, "Mine") == 0 {
 		sqlStr = sqlStr + " and Owner='" + username + "'"
 	}
@@ -85,7 +86,7 @@ func returnAllArticles(w http.ResponseWriter, r *http.Request) {
 	article := Article{}
 	articles := []Article{}
 	for rows.Next() {
-		err := rows.Scan(&article.Id, &article.Owner, &article.Title, &article.Description, &article.Content, &article.Image, &article.UpdatedTime)
+		err := rows.Scan(&article.Id, &article.Owner, &article.Title, &article.Description, &article.Content, &article.Image, &article.UpdatedTime, &article.LikeNum)
 		if err != nil {
 			return500(w, err)
 			return
@@ -167,6 +168,23 @@ func updateArticle(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println(article)
 	json.NewEncoder(w).Encode(article)
+}
+
+func like(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	Statement, err :=
+		database.Prepare("UPDATE Article SET LikeNum = LikeNum + 1 WHERE Id = ?")
+	if err != nil {
+		return500(w, err)
+		return
+	}
+	_, err = Statement.Exec(id)
+	if err != nil {
+		return500(w, err)
+		return
+	}
+	json.NewEncoder(w)
 }
 
 func deleteArticle(w http.ResponseWriter, r *http.Request) {
@@ -299,6 +317,7 @@ func handleRequests() {
 	myRouter.HandleFunc("/article/{id}", deleteArticle).Methods(http.MethodDelete)
 	myRouter.HandleFunc("/article/{id}", returnSingleArticle).Methods(http.MethodGet)
 	myRouter.HandleFunc("/upload", uploadFile).Methods(http.MethodPost)
+	myRouter.HandleFunc("/like/{id}", like).Methods(http.MethodPost)
 	s := http.StripPrefix("/static/", http.FileServer(http.Dir("./static/")))
 	myRouter.PathPrefix("/static/").Handler(s)
 	cors := gcors.New(
@@ -351,7 +370,7 @@ func main() {
 		return
 	}
 	Statement, err :=
-		database.Prepare("CREATE TABLE IF NOT EXISTS Article (Id INTEGER PRIMARY KEY, Owner TEXT, Title TEXT, Description TEXT, Content Text, Image Text,CreatedTime Text,UpdatedTime Text)")
+		database.Prepare("CREATE TABLE IF NOT EXISTS Article (Id INTEGER PRIMARY KEY, Owner TEXT, Title TEXT, Description TEXT, Content Text, Image Text,CreatedTime Text,UpdatedTime Text, LikeNum Text)")
 	if err != nil {
 		log.Fatal(err)
 		return
