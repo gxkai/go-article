@@ -88,7 +88,7 @@ func (c *Client) readPump() {
 		msg.Logo = user.Logo
 		fmt.Println(msg)
 		newMsg, err := json.Marshal(msg)
-		c.hub.broadcast <- []byte(newMsg)
+		c.hub.broadcast <- newMsg
 	}
 }
 

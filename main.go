@@ -72,7 +72,7 @@ var user User
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reg, _ := regexp.Compile("^/static")
-		if r.RequestURI == "/login" || r.RequestURI == "/ws" || reg.MatchString(r.RequestURI) {
+		if r.RequestURI == "/login" || reg.MatchString(r.RequestURI) {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -152,6 +152,8 @@ func returnJwt(w http.ResponseWriter, r *http.Request) {
 	isExist := false
 	for _, v := range users {
 		if v.Username == user.Username && v.Password == user.Password {
+			user.Password = ""
+			user.Logo = v.Logo
 			isExist = true
 			break
 		}
