@@ -65,6 +65,16 @@ var users = [...]User{
 		Password: "1207",
 		Logo:     "https://images.unsplash.com/photo-1613988958430-75932db23fbf?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=564&q=80",
 	},
+	{
+		Username: "test1",
+		Password: "test123",
+		Logo:     "https://images.unsplash.com/photo-1540878724756-d5c4517dea9c?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=921&q=80",
+	},
+	{
+		Username: "yzh",
+		Password: "test123",
+		Logo:     "https://images.unsplash.com/photo-1552224106-e004d7d09157?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80",
+	},
 }
 var jwtKey = []byte("666")
 var username string
