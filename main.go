@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
@@ -125,6 +126,7 @@ func handleRequests() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.Use(Middleware)
 	myRouter.HandleFunc("/login", returnJwt).Methods(http.MethodPost)
+	myRouter.HandleFunc("/messages", returnAllMessages).Methods(http.MethodGet)
 	myRouter.HandleFunc("/articles", returnAllArticles).Methods(http.MethodGet)
 	myRouter.HandleFunc("/article", createNewArticle).Methods(http.MethodPost)
 	myRouter.HandleFunc("/article", updateArticle).Methods(http.MethodPut)
@@ -143,6 +145,29 @@ func handleRequests() {
 		gcors.WithHeaders("*"),
 	)
 	log.Fatal(http.ListenAndServe(":10000", cors))
+}
+
+func returnAllMessages(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Endpoint Hit: returnAllMessages")
+	sqlStr := "SELECT Id, Owner, Title, Description, Content, Logo,  Image, UpdatedTime, LikeNum FROM Message WHERE 1=1"
+	rows, err :=
+		database.Query(sqlStr)
+	if err != nil {
+		return500(w, err)
+		return
+	}
+	message := Message{}
+	var messages []Message
+	for rows.Next() {
+		err := rows.Scan(&message.Id, &message.Owner, &message.Title, &message.Description, &message.Content, &message.Logo, &message.Image, &message.UpdatedTime, &message.LikeNum)
+		if err != nil {
+			return500(w, err)
+			return
+		}
+		messages = append(messages, message)
+	}
+	fmt.Println(messages)
+	json.NewEncoder(w).Encode(messages)
 }
 
 func returnJwt(w http.ResponseWriter, r *http.Request) {
@@ -197,7 +222,7 @@ func main() {
 		return
 	}
 	Statement.Exec()
-	Statement, err = database.Prepare("CREATE TABLE IF NOT EXISTS Message (Id INTEGER PRIMARY KEY, Owner TEXT DEFAULT '', Title TEXT DEFAULT '', Description TEXT DEFAULT '', Content Text DEFAULT '', Image Text DEFAULT '',CreatedTime Text DEFAULT '',UpdatedTime Text DEFAULT '', LikeNum INTEGER DEFAULT 0)")
+	Statement, err = database.Prepare("CREATE TABLE IF NOT EXISTS Message (Id INTEGER PRIMARY KEY, Owner TEXT DEFAULT '', Title TEXT DEFAULT '', Description TEXT DEFAULT '', Content Text DEFAULT '', Image Text DEFAULT '', Logo Text DEFAULT '',CreatedTime Text DEFAULT '',UpdatedTime Text DEFAULT '', LikeNum INTEGER DEFAULT 0)")
 	if err != nil {
 		log.Fatal(err)
 		return

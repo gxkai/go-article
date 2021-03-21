@@ -75,13 +75,14 @@ func (c *Client) readPump() {
 		msg := &Message{
 			Content: string(message[:]),
 			Owner:   username,
+			Logo:    user.Logo,
 		}
 		tm := time.Unix(time.Now().Unix(), 0).Format("2006-01-02 03:04:05")
 		msg.CreatedTime = tm
 		msg.UpdatedTime = tm
 		Statement, err :=
-			database.Prepare("INSERT INTO Message (Owner, Content ,CreatedTime ,UpdatedTime) VALUES (?, ?, ? , ?)")
-		result, err := Statement.Exec(msg.Owner, msg.Content, msg.CreatedTime, msg.UpdatedTime)
+			database.Prepare("INSERT INTO Message (Owner, Content, Logo ,CreatedTime ,UpdatedTime) VALUES (?, ? , ?, ? , ?)")
+		result, err := Statement.Exec(msg.Owner, msg.Content, msg.Logo, msg.CreatedTime, msg.UpdatedTime)
 
 		newId, err := result.LastInsertId()
 		msg.Id = strconv.FormatInt(newId, 10)
